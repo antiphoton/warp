@@ -82,7 +82,7 @@ impl Ws {
     pub fn on_upgrade<F, U>(self, func: F) -> impl Reply
     where
         F: FnOnce(WebSocket) -> U + Send + 'static,
-        U: Future<Output = ()> + Send + 'static,
+        U: Future<Output = ()> + 'static,
     {
         WsReply {
             ws: self,
@@ -132,7 +132,7 @@ struct WsReply<F> {
 impl<F, U> Reply for WsReply<F>
 where
     F: FnOnce(WebSocket) -> U + Send + 'static,
-    U: Future<Output = ()> + Send + 'static,
+    U: Future<Output = ()> + 'static,
 {
     fn into_response(self) -> Response {
         if let Some(on_upgrade) = self.ws.on_upgrade {
@@ -149,7 +149,7 @@ where
                         tracing::debug!("ws upgrade error: {}", err);
                     }
                 });
-            ::tokio::task::spawn(fut);
+            ::tokio::task::spawn_local(fut);
         } else {
             tracing::debug!("ws couldn't be upgraded since no upgrade state was present");
         }
